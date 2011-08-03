@@ -1,0 +1,426 @@
+/*
+ * SUMMARY:      functions.h - header file for number of DHSVM functions 
+ * USAGE:        Part of DHSVM
+ *
+ * AUTHOR:       Bart Nijssen
+ * ORG:          University of Washington, Department of Civil Engineering
+ * E-MAIL:       nijssen@u.washington.edu
+ * ORIG-DATE:    Apr-1996
+ * DESCRIPTION:  header file for large number of DHSVM functions 
+ * DESCRIP-END.
+ * FUNCTIONS:    
+ * COMMENTS:
+ * $Id: functions.h,v 1.9 2002/10/03 21:00:29 nijssen Exp $     
+ */
+
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
+
+#include "data.h"
+#include "DHSVMChannel.h"
+#include "groundwater.h"
+#include "soil_chemistry.h"
+#include "subbasin_calibration.h"
+#include "varid.h"
+#include "sizeofnt.h"
+#include "fifobin.h"
+#include "DHSVMerror.h"
+
+int mainDHSVM(int argc, char **argv);
+
+
+void Aggregate(int SpatialExtent, MAPSIZE *Map, OPTIONSTRUCT *Options, TOPOPIX **TopoMap,
+	       LAYER *Soil, LAYER *Veg, VEGCHEMPIX **VegChemMap, EVAPPIX **Evap,
+	       PRECIPPIX **Precip, RADCLASSPIX **RadMap, SNOWPIX **Snow,
+	       SOILPIX **SoilMap, MET_MAP_PIX **MetMap, AGGREGATED *Total, VEGTABLE *VType,
+	       ROADSTRUCT **Network, GWPIX **Groundwater, float* MeltFraction);
+
+void ApplyPointSources(int NSoilLayers, SOILPIX ** SoilMap, GWPIX ** Groundwater, 
+                       CHEMTABLE * ChemTable, int NSources, SOURCELOCATION ** Source,
+                       AGGREGATED *Total, int NChems, int HasGroundwater, VEGTABLE *VType, VEGCHEMPIX **VegChemMap );
+
+void ApplyNonPointSources(int x, int y, int NSoilLayers, SOILPIX ** SoilMap, GWPIX ** Groundwater, 
+                       CHEMTABLE *ChemTable, int NpsCats, NPSPIX **NpsMap, NONPOINTSOURCE **NpsTable,
+                       AGGREGATED *Total, int NChems, int HasGroundwater, MAPSIZE *Map, TOPOPIX ** TopoMap, float **PopulationMap, VEGTABLE *VType, VEGCHEMPIX **VegChemMap/*,ChemFlux *ChemFluxDB*/);
+
+void CalcAerodynamic(int NVegLayers, unsigned char OverStory,
+		     float n, float *Height, float Trunk, float *U,
+		     float *U2mSnow, float *Ra, float *RaSnow);
+
+double CalcDistance(COORD *LocA, COORD *LocB);
+
+float CalcEffectiveKh(int NSoilLayers, float Top, float Bottom,
+		      float *SoilDepth, float *KhDry, float *KhSol,
+		      float *Moisture, float *Porosity, float *TSoil);
+
+float CalcKhDry(float Density);
+
+float CalcSnowAlbedo(float TSurf, unsigned short Last, SNOWTABLE *SnowAlbedo);
+
+float CalcTransmissivity(float SoilDepth, float WaterTable, float LateralKs,
+			 float KsExponent);
+
+void CalcWeights(METLOCATION *Station, int NStats, int NX, int NY,
+		 uchar **BasinMask, uchar ****WeightArray,
+		 OPTIONSTRUCT *Options);
+
+float CalcWetBulbTemp(float RH, float Tair, float Press);
+
+void CheckOut(int CanopyRadAttOption, LAYER Veg, LAYER Soil, 
+	      VEGTABLE *VType, SOILTABLE *SType, MAPSIZE *Map, 
+	      TOPOPIX **TopoMap, VEGCHEMPIX **VegChemMap, SOILPIX **SoilMap, DUMPSTRUCT *Dump,VEGCHEMTABLE *VCType);
+
+unsigned char dequal(double a, double b);
+
+void draw(DATE *Day, int first, int DayStep, int NX, int NY, 
+	  float DX, float DY, int NGraphics, int *which_graphics,
+	  VEGTABLE *VType, SOILTABLE *SType,
+	  SNOWPIX **SnowMap, SOILPIX **SoilMap, VEGCHEMPIX **VegChemMap,
+	  TOPOPIX **TopoMap, PRECIPPIX **PrecipMap, float **PrismMap,
+	  float **SkyViewMap, unsigned char ***ShadowMap, EVAPPIX **EvapMap,
+	  RADCLASSPIX **RadMap, MET_MAP_PIX **MetMap, GWPIX **Groundwater,
+          CHEMTABLE *ChemTable, STREAMGRID **StreamGrid, STREAMGRID **RoadGrid, int dt, BASINWIDE *Basinwide);	//MWW 060705
+
+void DumpMap(MAPSIZE *Map, DATE *Current, MAPDUMP *DMap, TOPOPIX **TopoMap,
+	     EVAPPIX **EvapMap, PRECIPPIX **PrecipMap, RADCLASSPIX **RadMap,
+	     SNOWPIX **Snowap, SOILPIX **SoilMap, LAYER *Soil,
+	     VEGCHEMPIX **VegChemMap, LAYER *Veg, GWPIX **Groundwater, CHEMTABLE *ChemTable);
+
+void DumpPix(DATE *Current, int first, FILES *OutFile, EVAPPIX *Evap,
+	     PRECIPPIX *Precip, RADCLASSPIX *Rad, SNOWPIX *Snow,
+	     SOILPIX *Soil, MET_MAP_PIX *MetMap, int NSoil, int NVeg);
+	     
+void DumpState(MAPSIZE * Map, DATE * Current, DATE * Start,
+	      OPTIONSTRUCT * Options, DUMPSTRUCT * Dump, TOPOPIX ** TopoMap,
+	      EVAPPIX ** EvapMap, PRECIPPIX ** PrecipMap,
+	      RADCLASSPIX ** RadMap, SNOWPIX ** SnowMap, MET_MAP_PIX ** MetMap,
+	      VEGCHEMPIX ** VegChemMap, LAYER * Veg, SOILPIX ** SoilMap, LAYER * Soil,
+	      AGGREGATED * Total, UNITHYDRINFO * HydrographInfo,
+	      Channel * ChannelData, float *Hydrograph, GWPIX **Groundwater, 
+              CHEMTABLE * ChemTable, int NChems);						// MWW 111705
+
+void DumpZones(DATE * Current, int first, AGGZONEDUMP **DAZ, int NZoneDumps, 			//MWW-az
+             MAPSIZE * Map, EVAPPIX ** Evap, PRECIPPIX ** Precip, RADCLASSPIX ** Rad, 		//MWW-az
+	     SNOWPIX ** Snow, SOILPIX ** Soil, GWPIX ** Groundwater, TOPOPIX ** TopoMap,	//MWW-az
+	     VEGCHEMPIX ** VegChemMap, int NSoil, int NVeg, CHEMTABLE *ChemTable, STREAMGRID **StreamGrid);
+	     
+void ExecDump(MAPSIZE *Map, DATE *Current, DATE *Start,
+	      OPTIONSTRUCT *Options, DUMPSTRUCT *Dump, TOPOPIX **TopoMap,
+	      EVAPPIX **EvapMap, PRECIPPIX **PrecipMap,
+	      RADCLASSPIX **RadMap, SNOWPIX **SnowMap, MET_MAP_PIX **MetMap,
+	      VEGCHEMPIX **VegChemMap, LAYER *Veg, SOILPIX **SoilMap, LAYER *Soil,
+	      AGGREGATED *Total, UNITHYDRINFO *HydrographInfo,
+	      Channel *ChannelData, float *Hydrograph, GWPIX **Groundwater,
+              CHEMTABLE * ChemTable, int NChems, STREAMGRID **StreamGrid);
+
+unsigned char fequal(float a, float b);
+
+void FinalMassBalance(FILES *Out, AGGREGATED *Total, WATERBALANCE *Mass);
+//void CurMassBalance(FILES * Out, AGGREGATED * Total, WATERBALANCE * Mass);
+void GenerateScales(MAPSIZE *Map, int NumberType, void **XScale,
+		    void **YScale);
+
+float GetDumpZoneValue(int ID, int y, int x, int layer, EVAPPIX ** Evap, PRECIPPIX ** Precip, RADCLASSPIX ** Rad, 
+	     SNOWPIX ** Snow, SOILPIX ** Soil, GWPIX ** Groundwater, TOPOPIX ** TopoMap, VEGCHEMPIX ** VegChemMap, CHEMTABLE *ChemTable, STREAMGRID **StreamGrid);
+	     
+void GetMetData(OPTIONSTRUCT *Options, TIMESTRUCT *Time, int NSoilLayers,
+		int NStats, float SunMax, METLOCATION *Stat, MAPSIZE *Radar,
+		RADARPIX **RadarMap, char *RadarFileName, BASINWIDE * Basinwide);
+
+void GetPointSources(OPTIONSTRUCT * Options, TIMESTRUCT * Time, int NSources, 
+                     SOURCELOCATION ** Source, int NChems, MAPSIZE *Map);
+
+void GetNonPointSources(OPTIONSTRUCT * Options, TIMESTRUCT * Time, int NChems, int NPScats, 
+                     NPSPIX **NpsMap, NONPOINTSOURCE **NpsTable, MAPSIZE *Map);
+
+uchar InArea(MAPSIZE *Map, COORD *Loc);
+
+void InitAggZoneDump(LISTPTR Input, MAPSIZE * Map, int MaxSoilLayers,
+					 int MaxVegLayers, char *Path, int NAggZoneDumps,
+			AGGZONEDUMP **DAZ, TOPOPIX **TopoMap /*, FILES *chemtranssum*/);			
+
+void InitAggregated(int MaxVegLayers, int MaxSoilLayers, AGGREGATED *Total,
+                    MAPSIZE Map, TOPOPIX **TopoMap);
+
+void InitCharArray(char *Array, int Size);
+
+void InitConstants(LISTPTR Input, OPTIONSTRUCT *Options, MAPSIZE *Map,
+		   SOLARGEOMETRY *SolarGeo, TIMESTRUCT *Time, BASINWIDE * Basinwide);
+
+void InitDump(LISTPTR Input, OPTIONSTRUCT *Options, MAPSIZE *Map,
+	      int MaxSoilLayers, int MaxVegLayers, int Dt,
+	      TOPOPIX **TopoMap, DUMPSTRUCT *Dump, int *NGraphics,
+	      int **which_graphics);
+
+//JSB 1-12-08
+void InitChemDump(CHEMTABLE *ChemTable, char *Dumppath );
+
+
+void InitEvapMap(MAPSIZE *Map, EVAPPIX ***EvapMap, SOILPIX **SoilMap,
+		 LAYER *Soil, VEGCHEMPIX **VegChemMap, LAYER *Veg,
+		 TOPOPIX **TopoMap);
+
+void InitImageDump(LISTPTR Input, int Dt, MAPSIZE *Map, int MaxSoilLayers,
+		   int MaxVegLayers, char *Path, int NMaps, int NImages,
+		   MAPDUMP **DMap);
+
+void InitInFiles(INPUTFILES *InFiles);
+
+void InitInterpolationWeights(MAPSIZE *Map, OPTIONSTRUCT *Options,
+			      TOPOPIX **TopoMap, uchar ****MetWeights,
+			      METLOCATION *Stats, int NStats);
+
+void InitMapDump(LISTPTR Input, MAPSIZE *Map, int MaxSoilLayers,
+		 int MaxVegLayers, char *Path, int TotalMapImages, int NMaps,
+		 MAPDUMP **DMap);
+
+void InitMetMaps(int NDaySteps, MAPSIZE *Map, MAPSIZE *Radar,
+		 OPTIONSTRUCT *Options, char *WindPath, char *PrecipLapsePath,
+		 float ***PrecipLapseMap, float ***PrismMap,
+		 unsigned char ****ShadowMap, float ***SkyViewMap,
+		 EVAPPIX ***EvapMap, PRECIPPIX ***PrecipMap,
+		 RADARPIX ***RadarMap, RADCLASSPIX ***RadMap,
+		 SOILPIX **SoilMap, LAYER *Soil, VEGCHEMPIX **VegChemMap, MET_MAP_PIX ***MetMap,
+		 LAYER *Veg, TOPOPIX **TopoMap, float ****MM5Input,
+		 float ****WindModel);
+
+void InitMetSources(LISTPTR Input, OPTIONSTRUCT *Options, MAPSIZE *Map,
+		    int NSoilLayers, TIMESTRUCT *Time, INPUTFILES *InFiles,
+		    int *NStats, METLOCATION **Stat, MAPSIZE *Radar, 
+		    MAPSIZE *MM5Map);
+
+void InitMM5(LISTPTR Input, int NSoilLayers, TIMESTRUCT *Time,
+	     INPUTFILES *InFiles, OPTIONSTRUCT *Options, MAPSIZE *MM5Map,
+	     MAPSIZE *Map);
+
+void InitMM5Maps(int NSoilLayers, int NY, int NX, float ****MM5Input,
+		 RADCLASSPIX ***RadMap, OPTIONSTRUCT *Options);
+
+void InitModelState(DATE *Start, MAPSIZE *Map, OPTIONSTRUCT *Options,
+		    PRECIPPIX **PrecipMap, SNOWPIX **SnowMap,
+		    SOILPIX **SoilMap, LAYER Soil, SOILTABLE *SType,
+		    VEGCHEMPIX **VegChemMap, LAYER Veg, VEGTABLE *VType, char *Path,
+		    SNOWTABLE *SnowAlbedo, TOPOPIX **TopoMap,
+		    ROADSTRUCT **Network, UNITHYDRINFO *HydrographInfo,
+		    float *Hydrograph);
+
+void InitNetwork(int HasNetwork, char *ImperviousFilePath, int NY, int NX, 
+                 float DX, float DY, TOPOPIX **TopoMap, SOILPIX **SoilMap, 
+		 VEGCHEMPIX **VegChemMap, VEGTABLE *VType, ROADSTRUCT ***Network, 
+		 CHANNEL *ChannelData, LAYER Veg);
+void InitNewDay(int DayOfYear, SOLARGEOMETRY *SolarGeo);
+
+void InitNewMonth(TIMESTRUCT *Time, OPTIONSTRUCT *Options, MAPSIZE *Map,
+		  TOPOPIX **TopoMap, float **PrismMap, float **PopulationMap,
+		  unsigned char ***ShadowMap, RADCLASSPIX **RadMap, 
+		  INPUTFILES *InFiles, int NVegs, VEGTABLE *VType, int NStats,
+		  METLOCATION *Stat, char *Path, BASINWIDE * Basinwide, int NpsCats, int *TotalPopulation);
+
+void InitNewStep(INPUTFILES *InFiles, MAPSIZE *Map, TIMESTRUCT *Time,
+		 int NSoilLayers, OPTIONSTRUCT *Options, int NStats,
+		 METLOCATION *Stat, char *RadarFileName, MAPSIZE *Radar,
+		 RADARPIX **RadarMap, SOLARGEOMETRY *SolarGeo, 
+		 TOPOPIX **TopoMap, RADCLASSPIX **RadMap, SOILPIX **SoilMap,
+		 float ***MM5Input, float ***WindModel, MAPSIZE *MM5Map, BASINWIDE * Basinwide);
+
+int InitPixDump(LISTPTR Input, MAPSIZE *Map, uchar **BasinMask, char *Path,
+		int NPix, PIXDUMP **Pix);
+		
+void InitNonPointSources(LISTPTR Input, MAPSIZE * Map, LAYER *Nps, float ***PopulationMap,
+                     NPSPIX ***NpsMap, NONPOINTSOURCE **NpsTable, OPTIONSTRUCT * Options);
+		     
+int InitNpsTable(NONPOINTSOURCE **NpsTable, LISTPTR Input, LAYER *Nps);
+		     
+void InitPointSources(LISTPTR Input, MAPSIZE * Map, OPTIONSTRUCT * Options,
+                      int *NSources, SOURCELOCATION ** Source);
+
+void InitPrecipLapse(LISTPTR Input, INPUTFILES *InFiles);
+
+void InitPrecipLapseMap(char *PrecipLapseFile, int NY, int NX,
+			float ***PrecipLapseMap);
+
+void InitPrismMap(int NY, int NX, float ***PrismMap);
+
+void InitStreamGrid( MAPSIZE *Map, TOPOPIX **TopoMap,	 
+                     STREAMGRID ***StreamGrid, int NChems); 			 // MWW 06/07/2005
+
+void InitShadeMap(OPTIONSTRUCT *Options, int NDaySteps, int NY, int NX,
+		  unsigned char ****ShadowMap, float ***SkyViewMap);
+
+void InitPrecipMap(MAPSIZE *Map, PRECIPPIX ***PrecipMap, VEGCHEMPIX **VegChemMap,
+		   LAYER *Veg, TOPOPIX **TopoMap);
+
+void InitRadar(LISTPTR Input, MAPSIZE *Map, TIMESTRUCT *Time,
+	       INPUTFILES *InFiles, MAPSIZE *Radar);
+
+void InitRadarMap(MAPSIZE *Radar, RADARPIX ***RadarMap);
+
+void InitRadMap(MAPSIZE *Map, RADCLASSPIX ***RadMap);
+
+void InitMetMap(MAPSIZE *Map, MET_MAP_PIX ***MetMap);
+
+void InitSatVaporTable(void);
+
+void InitSnowMap(MAPSIZE *Map, SNOWPIX ***SnowMap);
+
+void InitSoilMap(LISTPTR Input, MAPSIZE *Map, LAYER *Soil,
+		 TOPOPIX **TopoMap, SOILPIX ***SoilMap);
+
+int InitSoilTable(SOILTABLE **SType, LISTPTR Input, LAYER *Soil);
+
+void InitSnowTable(SNOWTABLE **SnowAlbedo, int Dt);
+
+void InitStateDump(LISTPTR Input, int NStates, DATE **DState);
+
+void InitGraphicsDump(LISTPTR Input, int NGraphics, int ***which_graphics);
+
+void InitStations(LISTPTR Input, MAPSIZE *Map, int NDaySteps,
+		  OPTIONSTRUCT *Options, int *NStats, METLOCATION **Stat);
+
+void InitTables(int StepsPerDay, LISTPTR Input, OPTIONSTRUCT *Options,
+		SOILTABLE **SType, LAYER *Soil, VEGTABLE **VType,
+		LAYER *Veg, SNOWTABLE **SnowAlbedo);
+
+void InitTerrainMaps(LISTPTR Input, OPTIONSTRUCT *Options, MAPSIZE *Map,
+		     LAYER *Soil, TOPOPIX ***TopoMap, SOILPIX ***SoilMap,
+		     VEGCHEMPIX ***VegChemMap);
+
+void InitTopoMap(LISTPTR Input, OPTIONSTRUCT *Options, MAPSIZE *Map,
+		 TOPOPIX ***TopoMap);
+
+void InitUnitHydrograph(LISTPTR Input, MAPSIZE *Map, TOPOPIX **TopoMap,
+			UNITHYDR ***UnitHydrograph, float **Hydrograph,
+			UNITHYDRINFO *HydrographInfo);
+
+void InitVegChemMap(LISTPTR Input, MAPSIZE *Map, VEGCHEMPIX ***VegChemMap);
+
+int InitVegTable(VEGTABLE **VType, LISTPTR Input, OPTIONSTRUCT *Options,
+		 LAYER *Veg);
+
+float evalexpint(int n, float x);
+
+void InitWindModel(LISTPTR Input, INPUTFILES *InFiles, int NStats,
+		   METLOCATION *Stat);
+
+void InitWindModelMaps(char *WindPath, int NY, int NX, float ****WindModel);
+
+uchar IsStationLocation(COORD *Loc, int NStats, METLOCATION *Station,
+			int *WhichStation);
+
+int IsShoreline(int y, int x, TOPOPIX ** TopoMap);
+
+void InitXGraphics(int argc, char **argv,
+		   int ny, int nx, int nd, MET_MAP_PIX ***MetMap);
+
+void InterpolateSoilTemperature( int y, int x, int j, int HasHeatFlux,
+                                 int NStats, int NLayers, float  SoilExponent,
+				 float SoilInertia, PIXMET *LocalMet,
+                                 METLOCATION * Stat, uchar * MetWeights,
+                                 float LocalElev, SOILPIX * LocalSoil);
+
+float LapsePrecip(float Precip, float FromElev, float ToElev,
+		  float PrecipLapse);
+
+float LapseT(float Temp, float FromElev, float ToElev, float LapseRate);
+
+PIXMET MakeLocalMetData(int y, int x, MAPSIZE *Map, int DayStep,
+			OPTIONSTRUCT *Options, int NStats,
+			METLOCATION *Stat, uchar *MetWeights,
+			float LocalElev, RADCLASSPIX *RadMap,
+			PRECIPPIX *PrecipMap, MAPSIZE *Radar,
+			RADARPIX **RadarMap, float **PrismMap,
+			SNOWPIX *LocalSnow, SNOWTABLE *SnowAlbedo,
+			float ***MM5Input, float ***WindModel,
+			float **PrecipLapseMap, MET_MAP_PIX ***MetMap,
+			int NGraphics, int Month, float skyview,
+			unsigned char shadow, float SunMax,
+			float SineSolarAltitude);
+
+void MassBalance(DATE *Current, FILES *Out, AGGREGATED *Total,WATERBALANCE *Mass, AGGREGATED *DailyTotal, int stepcounter, int outstep);
+
+
+
+void MassEnergyBalance(int y, int x, float SineSolarAltitude, float DX, 
+		       float DY, int Dt, int HeatFluxOption, 
+		       int CanopyRadAttOption, int MaxVegLayers, 
+		       PIXMET *LocalMet, ROADSTRUCT *LocalNetwork, CHANNEL *ChannelData, 
+		       PRECIPPIX *LocalPrecip, VEGTABLE *VType, 
+		       VEGCHEMPIX *LocalVeg, SOILTABLE *SType,
+		       SOILPIX *LocalSoil, SNOWPIX *LocalSnow,
+		       EVAPPIX *LocalEvap, PIXRAD *TotalRad, /*int NChems,*/ CHEMTABLE *ChemTable,
+		       SOILCHEMTABLE *SCType, VEGCHEMTABLE *VCType, DATE CurDate, BASINWIDE * Basinwide,
+			   GWPIX *LocalGW, GEOTABLE *GType, float Slope, MAPSIZE *Map, VEGCHEMPIX **VegChemMap,OPTIONSTRUCT *Options,
+				int NSoilLayers, SOILPIX ** SoilMap, GWPIX ** Groundwater, 
+                int NpsCats, NPSPIX **NpsMap, NONPOINTSOURCE **NpsTable,
+                       AGGREGATED *Total, int NChems, int HasGroundwater,TOPOPIX ** TopoMap, float **PopulationMap);
+
+			   
+
+float MaxRoadInfiltration(ChannelMapPtr **map, int col, int row);
+
+void ReadChannelState(char *Path, DATE *Current, Channel *Head, CHEMTABLE *ChemTable, 
+                      int Chemistry, int StreamTemp);
+
+void ReadMetRecord(OPTIONSTRUCT *Options, DATE *Current, int NSoilLayers,
+		   FILES *InFile, unsigned char IsWindModelLocation,
+		   MET *MetRecord, BASINWIDE * Basinwide);
+
+void ReadRadarMap(DATE *Current, DATE *StartRadar, int Dt, MAPSIZE *Radar,
+		  RADARPIX **RadarMap, char *HDFFileName);
+
+void ReadPointSource(DATE * Current, FILES * InFile, SOURCE * SourceRecord, int Type, int NChems, float cellarea);
+
+void ReadPRISMMap(DATE *Current, DATE *StartRadar, int Dt, MAPSIZE *Radar,
+		  RADARPIX **RadarMap, char *HDFFileName);
+
+void ResetAggregate(OPTIONSTRUCT *Options, LAYER *Soil, LAYER *Veg, AGGREGATED *Total);
+
+void ResetValues(MAPSIZE *Map, SOILPIX **SoilMap);
+
+int Round(double x);
+
+void RouteGlacier(MAPSIZE * Map, TIMESTRUCT * Time, TOPOPIX ** TopoMap,
+		  SOILPIX ** SoilMap, SNOWPIX ** SnowMap, int dT);
+		  
+void RouteSubSurface(OPTIONSTRUCT *Options, int Dt, 
+                     MAPSIZE *Map, TOPOPIX **TopoMap, VEGTABLE *VType,
+                     VEGCHEMPIX ** VegChemMap, ROADSTRUCT **Network, SOILTABLE *SType,
+                     SOILPIX **SoilMap, GEOTABLE *GType, GWPIX **Groundwater,
+                     CHANNEL *ChannelData, AGGREGATED *Total, CHEMTABLE *ChemTable, int nchems);
+
+void RouteSurface(MAPSIZE *Map, TIMESTRUCT *Time, TOPOPIX **TopoMap,
+		  SOILPIX **SoilMap, int HasNetwork,
+		  UNITHYDR **UnitHydrograph,
+		  UNITHYDRINFO *HydrographInfo, float *Hydrograph,
+		  FILES *StreamFile, VEGCHEMPIX **VegChemMap, VEGTABLE *VType, int FractionalRouting,
+		  CHEMTABLE * ChemTable, int nchems);
+
+float SatVaporPressure(float Temperature);
+
+int ScanInts(FILE *FilePtr, int *X, int N);
+
+int ScanDoubles(FILE *FilePtr, double *X, int N);
+
+int ScanFloats(FILE *FilePtr, float *X, int N);
+
+uchar ScanUChars(FILE *FilePtr, uchar *X, int N);
+
+void SkipHeader(FILES *InFile, int NLines);
+
+void SkipLines(FILES *InFile, int NLines);
+
+void StoreChannelState(char *Path, DATE *Current, Channel *Head, int nchems, int Streamtemp);
+
+void StoreModelState(char *Path, DATE *Current, MAPSIZE *Map,
+		     OPTIONSTRUCT *Options, TOPOPIX **TopoMap,
+		     PRECIPPIX **PrecipMap, SNOWPIX **SnowMap,
+		     MET_MAP_PIX **MetMap, RADCLASSPIX **RadMap,
+		     VEGCHEMPIX **VegChemMap, LAYER *Veg, SOILPIX **SoilMap,
+		     LAYER *Soil, UNITHYDRINFO *HydrographInfo,
+		     float *Hydrograph);
+
+void UpdateStreamGridChem( MAPSIZE *Map, TOPOPIX **TopoMap, ChannelMapPtr ** chanmap,	 
+                      STREAMGRID **StreamGrid, int nchems, int deltat); 			 /* MWW 06/07/2005 */
+
+#endif
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
